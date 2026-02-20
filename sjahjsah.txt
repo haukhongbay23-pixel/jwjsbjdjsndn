@@ -1,0 +1,129 @@
+--// WAIT CHARACTER
+repeat task.wait() until game.Players.LocalPlayer.Character
+repeat task.wait() until game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+
+--// SERVICES
+local Players = game:GetService("Players")
+local VirtualUser = game:GetService("VirtualUser")
+local player = Players.LocalPlayer
+
+--// REMOVE OLD
+pcall(function()
+    game.CoreGui:FindFirstChild("ChiiHauu"):Destroy()
+end)
+
+--// GUI
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.Name = "ChiiHauu"
+
+local OpenButton = Instance.new("TextButton", ScreenGui)
+OpenButton.Size = UDim2.new(0,60,0,60)
+OpenButton.Position = UDim2.new(0.05,0,0.4,0)
+OpenButton.BackgroundColor3 = Color3.fromRGB(30,30,30)
+OpenButton.Text = "☰"
+OpenButton.TextScaled = true
+OpenButton.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", OpenButton).CornerRadius = UDim.new(1,0)
+
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0,320,0,330)
+MainFrame.Position = UDim2.new(0.35,0,0.3,0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
+MainFrame.Visible = false
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0,15)
+
+OpenButton.MouseButton1Click:Connect(function()
+	MainFrame.Visible = not MainFrame.Visible
+end)
+
+--// VARIABLES
+_G.AutoFarm = false
+_G.FastAttack = false
+_G.BringMob = false
+
+--// CREATE TOGGLE
+local function CreateToggle(name, posY, var)
+	local btn = Instance.new("TextButton", MainFrame)
+	btn.Size = UDim2.new(0.85,0,0,40)
+	btn.Position = UDim2.new(0.075,0,posY,0)
+	btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+	btn.Text = name.." : OFF"
+	btn.TextScaled = true
+	btn.TextColor3 = Color3.new(1,1,1)
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0,10)
+
+	btn.MouseButton1Click:Connect(function()
+		_G[var] = not _G[var]
+		if _G[var] then
+			btn.Text = name.." : ON"
+			btn.BackgroundColor3 = Color3.fromRGB(0,170,0)
+		else
+			btn.Text = name.." : OFF"
+			btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+		end
+	end)
+end
+
+CreateToggle("Auto Farm LV",0.2,"AutoFarm")
+CreateToggle("Fast Attack",0.35,"FastAttack")
+CreateToggle("Gom Quái",0.5,"BringMob")
+
+--// GET MOB SAFE
+function GetMob()
+	if not workspace:FindFirstChild("Enemies") then return end
+	for _,v in pairs(workspace.Enemies:GetChildren()) do
+		if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+			return v
+		end
+	end
+end
+
+--// EQUIP
+function EquipWeapon()
+	for _,v in pairs(player.Backpack:GetChildren()) do
+		if v:IsA("Tool") then
+			player.Character.Humanoid:EquipTool(v)
+			break
+		end
+	end
+end
+
+--// FAST ATTACK LOOP
+task.spawn(function()
+	while task.wait() do
+		if _G.FastAttack then
+			pcall(function()
+				if not player.Character:FindFirstChildOfClass("Tool") then
+					EquipWeapon()
+				end
+				VirtualUser:Button1Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+				VirtualUser:Button1Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+			end)
+		end
+	end
+end)
+
+--// AUTO FARM LOOP
+task.spawn(function()
+	while task.wait(0.1) do
+		if _G.AutoFarm then
+			pcall(function()
+				local mob = GetMob()
+				if mob and mob:FindFirstChild("HumanoidRootPart") then
+					player.Character.HumanoidRootPart.CFrame =
+						mob.HumanoidRootPart.CFrame * CFrame.new(0,15,0)
+
+					
+					if _G.BringMob then
+						for _,v in pairs(workspace.Enemies:GetChildren()) do
+							if v:FindFirstChild("HumanoidRootPart") then
+								v.HumanoidRootPart.CFrame =
+									mob.HumanoidRootPart.CFrame
+							end
+						end
+					end
+				end
+			end)
+		end
+	end
+end)
